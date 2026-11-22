@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login — PestWatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --color-pw-bg: #0a0f0d;
+    --color-pw-panel: #111a14;
+    --color-pw-border: #1e3a24;
+    --color-pw-green: #2ecc71;
+    --color-pw-green-dim: #1a7a43;
+    --color-pw-text: #d4f0dc;
+    --color-pw-muted: #5a8a66;
+    --color-pw-red: #e74c3c;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+  @layer base {
+    body {
+      background-image: radial-gradient(ellipse at 20% 50%, #0d2e1a 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 20%, #081f10 0%, transparent 50%);
+    }
+  }
+</style>
+</head>
+<body class="bg-pw-bg text-pw-text font-mono min-h-screen flex items-center justify-center p-8">
+<div class="bg-pw-panel border border-pw-border rounded-[4px] p-10 w-full max-w-[400px] shadow-[0_0_40px_rgba(46,204,113,0.05)]">
+  <div class="font-head text-[1.8rem] font-extrabold text-pw-green tracking-[-1px] mb-1">🌿 PestWatch</div>
+  <div class="text-pw-muted text-[0.75rem] mb-8">// SIGN IN TO CONTINUE</div>
+
+  <div id="error" class="hidden text-pw-red text-[0.8rem] mb-4 px-3 py-2 bg-pw-red/10 border-l-[3px] border-pw-red"></div>
+
+  <form id="login-form">
+    <label class="block text-[0.7rem] text-pw-muted mb-[0.4rem] tracking-[1px] uppercase">Username or Email</label>
+    <input type="text" name="username" required autocomplete="off"
+           class="w-full bg-[#0d1a10] border border-pw-border text-pw-text px-4 py-3 font-mono text-[0.85rem] rounded-[2px] mb-[1.2rem] outline-none transition-colors duration-200 focus:border-pw-green-dim">
+
+    <label class="block text-[0.7rem] text-pw-muted mb-[0.4rem] tracking-[1px] uppercase">Password</label>
+    <input type="password" name="password" required
+           class="w-full bg-[#0d1a10] border border-pw-border text-pw-text px-4 py-3 font-mono text-[0.85rem] rounded-[2px] mb-[1.2rem] outline-none transition-colors duration-200 focus:border-pw-green-dim">
+
+    <button id="submit" type="submit"
+            class="w-full bg-pw-green text-black p-[0.85rem] font-head text-base font-bold rounded-[2px] cursor-pointer transition-colors duration-200 hover:bg-[#27ae60] disabled:opacity-60 disabled:cursor-not-allowed">Login</button>
+  </form>
+
+  <div class="text-center mt-6 text-[0.75rem] text-pw-muted">No account? <a href="/signup" class="text-pw-green no-underline">Sign up</a></div>
+</div>
+
+<script>
+  const form = document.getElementById('login-form');
+  const errorBox = document.getElementById('error');
+  const submitBtn = document.getElementById('submit');
+
+  function showError(message) {
+    errorBox.textContent = message;
+    errorBox.classList.remove('hidden');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.classList.add('hidden');
+    submitBtn.disabled = true;
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: form.username.value,
+          password: form.password.value,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        window.location.href = data.redirect || '/dashboard';
+        return;
+      }
+      showError(data.error || 'Invalid credentials.');
+      form.password.value = '';
+    } catch (err) {
+      showError('Could not reach the server. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

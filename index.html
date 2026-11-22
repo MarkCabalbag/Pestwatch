@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PestWatch — Device + Dashboard Showcase</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0b0b;--panel:#111;--line:#2a2a2a;--tx:#f2f2f2;--mu:#8a8a8a;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding:18px 24px;border-bottom:1px solid var(--line)}
+h1{font-size:1.15rem;font-weight:600;letter-spacing:-.01em;margin:0}
+.sub{color:var(--mu);font-size:.8rem;margin-top:2px}
+.flow{display:flex;align-items:center;gap:6px;color:var(--mu);font-size:.75rem}
+.flow span{padding:4px 11px;border:1px solid var(--line);border-radius:999px;transition:.2s;white-space:nowrap}
+.flow span.hot{background:#fff;color:#000;border-color:#fff}
+.flow i{font-style:normal;opacity:.5}
+.hc{display:flex;align-items:center;gap:16px}
+.hc label,.ctl label{color:var(--mu);font-size:.8rem;display:flex;align-items:center;gap:8px}
+input[type=range]{accent-color:#fff}
+.btn{font:500 .85rem system-ui,sans-serif;background:transparent;color:var(--tx);border:1px solid #3a3a3a;border-radius:6px;padding:8px 14px;cursor:pointer}
+.btn:hover:not(:disabled){border-color:#888}
+.btn.pri{background:#fff;color:#000;border-color:#fff;font-weight:600}
+.btn.stop{background:transparent;color:#fff;border-color:#fff}
+.btn.big{padding:10px 26px;font-size:.9rem}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.wrap{display:flex;padding:20px 24px;align-items:flex-start}
+#dev{flex:0 0 var(--lw,44%);min-width:380px}#right{flex:1;min-width:380px}
+.split{flex:0 0 24px;align-self:stretch;display:flex;align-items:center;justify-content:center;cursor:col-resize;touch-action:none;outline:none}
+.split i{width:3px;height:56px;border-radius:2px;background:#333}.split:hover i,.split:focus i,.split.d i{background:#fff}
+.wrap.d iframe{pointer-events:none}.wrap.d{user-select:none}
+@media(max-width:900px){.wrap{flex-direction:column;gap:16px}#dev,#right{flex:none;width:100%;min-width:0}.split{display:none}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:.75rem;color:var(--tx);font-weight:500}
+.bar .url{flex:1;text-align:right;color:var(--mu);font-weight:400}
+.dot{width:8px;height:8px;border-radius:50%;background:#555}
+#chip{margin-left:auto;color:var(--mu);font-weight:400}#chip.on{color:#fff}
+svg{display:block;width:100%;height:auto;background:#0b0b0b}
+.ctl{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:14px 14px 6px}
+.sl{display:flex;align-items:center;gap:10px;padding:6px 14px;color:var(--mu);font-size:.8rem}
+.sl span{width:130px}.sl b{color:var(--tx);font-weight:500}.sl input{flex:1}
+#ser{height:130px;overflow:auto;margin:10px 14px 14px;padding:10px;background:#000;border:1px solid var(--line);border-radius:6px;font:.7rem/1.5 'Space Mono',monospace;color:#9a9a9a}
+#ser .r{color:#fff;font-weight:700}#ser .y{color:#ccc}#ser .b{color:#777}
+iframe{width:100%;height:880px;border:0;display:block;background:#0a0f0d}
+#bug,#beam,#sms{display:none}
+#dev.ir #bug,#dev.ir #beam,#dev.sms #sms{display:inline}
+#dev.ir #irled{fill:#ff3b30}
+.bzw{opacity:0}#dev.bz .bzw{opacity:.9}#dev.bz #bz{transform:translate(1px,1px)}
+@keyframes bl{50%{opacity:.15}}
+#dev.run #simled,#dev.run #pwr{animation:bl 1.4s infinite}#dev.sms #simled{animation:bl .2s infinite}
+#lcd text{font:700 21px 'Space Mono',monospace;fill:#14260c}
+.lb{font:700 8px 'Space Mono',monospace;fill:#fff}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>This is how the website and IoT works</h1><div class="sub">Press Play to watch the sensor node send its readings to the PestWatch website.</div></div>
+  <div class="flow"><span id="f1" title="DHT22 + IR sensor">1 Sense</span><i>→</i><span id="f2" title="Arduino UNO R4 WiFi">2 Process</span><i>→</i><span id="f3" title="WiFi POST and SMS">3 Send</span><i>→</i><span id="f4" title="PestWatch website">4 Display</span></div>
+  <div class="hc"><label>Speed <span id="spv">1×</span><input type="range" id="spd" min=".5" max="4" step=".5" value="1"></label><button class="btn pri big" id="simBtn">▶ Play</button></div>
+</header>
+
+<div class="wrap">
+  <section class="card" id="dev">
+    <div class="bar"><span class="dot"></span>IoT device · Arduino UNO R4 WiFi<span id="chip">● POWERED OFF</span></div>
+    <svg viewBox="0 0 520 600" role="img" aria-label="Simulated PestWatch hardware">
+      <defs><linearGradient id="pcb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17909b"/><stop offset="1" stop-color="#0b5a64"/></linearGradient></defs>
+      <!-- wires -->
+      <g fill="none" stroke-width="3" stroke-linecap="round">
+        <path d="M65 296 C65 262 180 280 180 246" stroke="#f1c40f"/>
+        <path d="M430 292 C430 262 355 280 355 246" stroke="#e67e22"/>
+        <path d="M190 128 C190 200 290 190 290 246" stroke="#3498db"/>
+        <path d="M210 128 C210 205 305 195 305 246" stroke="#9b59b6"/>
+        <path d="M230 128 C230 210 320 200 320 246" stroke="#e74c3c"/>
+        <path d="M250 128 C250 215 335 205 335 246" stroke="#555"/>
+        <path d="M72 512 C72 480 170 500 170 462" stroke="#2ecc71"/>
+        <path d="M400 492 C400 470 330 490 330 462" stroke="#f1c40f"/>
+        <path d="M420 492 C420 475 345 495 345 462" stroke="#ecf0f1"/>
+      </g>
+      <!-- LCD -->
+      <rect x="70" y="12" width="380" height="118" rx="6" fill="#1f7a3a" stroke="#0e4a22"/>
+      <rect x="88" y="24" width="344" height="74" rx="3" fill="#111"/>
+      <rect id="lcdbg" x="96" y="29" width="328" height="64" fill="#26361d"/>
+      <g id="lcd"></g>
+      <rect x="170" y="104" width="120" height="24" rx="2" fill="#1b4fa8"/>
+      <text x="230" y="119" text-anchor="middle" class="lb">I2C · PCF8574</text>
+      <!-- DHT22 -->
+      <rect x="25" y="185" width="80" height="95" rx="6" fill="#eef2f5" stroke="#aab"/>
+      <g stroke="#b8c0c8" stroke-width="2"><path d="M40 195v50M55 195v50M70 195v50M85 195v50"/></g>
+      <text x="65" y="268" text-anchor="middle" font-size="11" font-weight="700" fill="#345" font-family="Space Mono">DHT22</text>
+      <g fill="#c9a227"><rect x="42" y="280" width="4" height="16"/><rect x="63" y="280" width="4" height="16"/><rect x="84" y="280" width="4" height="16"/></g>
+      <text id="dhtv" x="65" y="176" text-anchor="middle" font-size="11" fill="#9fe3b5" font-family="Space Mono">--°C --%</text>
+      <!-- IR sensor -->
+      <rect x="415" y="188" width="92" height="88" rx="4" fill="#1d4e9a" stroke="#0e2f66"/>
+      <circle cx="440" cy="214" r="10" fill="#cfe9ff"/><circle cx="480" cy="214" r="10" fill="#222"/>
+      <circle id="irled" cx="460" cy="252" r="4" fill="#5a1a1a"/><circle cx="485" cy="258" r="9" fill="#d4af37"/>
+      <text x="461" y="270" text-anchor="middle" class="lb" style="font-size:7px">IR AVOID</text>
+      <g fill="#c9a227"><rect x="428" y="276" width="4" height="16"/><rect x="448" y="276" width="4" height="16"/><rect x="468" y="276" width="4" height="16"/></g>
+      <g id="beam" stroke="#ff6b6b" stroke-dasharray="4 4" stroke-width="2"><path d="M440 202 L452 168"/><path d="M480 202 L468 168"/></g>
+      <g id="bug" fill="#8b4a1f"><ellipse cx="460" cy="160" rx="7" ry="10"/><circle cx="460" cy="146" r="4"/><path d="M453 156l-10-5M453 161l-11 1M453 166l-9 7M467 156l10-5M467 161l11 1M467 166l9 7" stroke="#8b4a1f" stroke-width="1.5" fill="none"/></g>
+      <!-- Arduino -->
+      <rect x="140" y="250" width="240" height="208" rx="12" fill="url(#pcb)" stroke="#073b42" stroke-width="2"/>
+      <rect x="150" y="244" width="220" height="8" fill="#111"/><rect x="150" y="456" width="220" height="8" fill="#111"/>
+      <rect x="225" y="458" width="70" height="22" rx="4" fill="#bbb" stroke="#777"/>
+      <rect x="248" y="266" width="104" height="62" rx="4" fill="#222" stroke="#999"/>
+      <path d="M256 276h30v8h-30zM300 276h40" stroke="#c9a227" stroke-width="2" fill="none"/>
+      <text x="300" y="312" text-anchor="middle" class="lb">ESP32-S3</text>
+      <rect x="170" y="330" width="50" height="50" rx="3" fill="#1a1a1a"/><text x="195" y="359" text-anchor="middle" class="lb" style="font-size:7px">RA4M1</text>
+      <rect x="240" y="340" width="120" height="86" rx="3" fill="#050505"/><g id="mx"></g>
+      <text x="260" y="446" text-anchor="middle" class="lb" style="font-size:8px">ARDUINO UNO R4 WiFi</text>
+      <circle id="pwr" cx="160" cy="272" r="4" fill="#2ecc71"/><text x="168" y="275" class="lb" style="font-size:6px">ON</text>
+      <circle id="wifiled" cx="160" cy="290" r="4" fill="#444"/><text x="168" y="293" class="lb" style="font-size:6px">WiFi</text>
+      <!-- Buzzer -->
+      <g id="bz"><circle cx="80" cy="548" r="38" fill="#151515" stroke="#333" stroke-width="2"/><circle cx="80" cy="548" r="9" fill="#000"/><text x="58" y="535" fill="#bbb" font-size="12">+</text>
+      <g class="bzw" fill="none" stroke="#f1c40f" stroke-width="2"><circle cx="80" cy="548" r="46"/><circle cx="80" cy="548" r="54" opacity=".6"/></g></g>
+      <text x="80" y="596" text-anchor="middle" class="lb" style="font-size:7px">BUZZER</text>
+      <!-- SIM800L -->
+      <rect x="385" y="492" width="122" height="92" rx="4" fill="#b02a2a" stroke="#6e1515"/>
+      <rect x="448" y="506" width="48" height="38" rx="2" fill="#151515"/><text x="472" y="529" text-anchor="middle" class="lb" style="font-size:7px">SIM800L</text>
+      <path d="M395 560l8-12 8 12 8-12 8 12 8-12 8 12" stroke="#e8c27a" stroke-width="2" fill="none"/>
+      <circle id="simled" cx="398" cy="508" r="4" fill="#4cff7a" opacity=".2"/>
+      <g id="sms"><rect x="390" y="330" width="118" height="82" rx="8" fill="#1d6b3a" stroke="#2ecc71"/><path d="M430 412l8 14 8-14z" fill="#1d6b3a"/>
+        <text x="398" y="348" class="lb">SMS SENT</text><text id="smst" x="398" y="364" class="lb" style="font-size:7px"></text><text x="398" y="378" class="lb" style="font-size:7px" id="smst2"></text><text x="398" y="392" class="lb" style="font-size:7px" id="smst3"></text></g>
+    </svg>
+    <div class="ctl">
+      <button class="btn" id="pestBtn" disabled>Trigger pest</button>
+      <label><input type="checkbox" id="snd" checked> Buzzer sound</label>
+    </div>
+    <div class="sl"><span>Temp <b id="tv">28.4</b>°C</span><input type="range" id="ts" min="15" max="45" step=".1" value="28.4"></div>
+    <div class="sl"><span>Humidity <b id="hv">67</b>%</span><input type="range" id="hs" min="20" max="98" step="1" value="67"></div>
+    <div id="ser"></div>
+  </section>
+
+  <div class="split" id="split" role="separator" aria-orientation="vertical" tabindex="0" title="Drag to resize · double-click to reset"><i></i></div>
+
+  <section class="card" id="right">
+    <div class="bar"><span class="dot"></span>Website<span class="url">http://192.168.100.28/iot/dashboard</span></div>
+    <iframe id="dash" title="PestWatch dashboard"></iframe>
+  </section>
+</div>
+
+<!-- dashboard.html, unchanged except the Tailwind script URL is pinned to an exact version and closing script tags are escaped for embedding -->
+<script type="text/plain" id="dash-src"><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — PestWatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"><\/script>
+<style type="text/tailwindcss">
+  @theme {
+    --color-pw-bg: #0a0f0d;
+    --color-pw-panel: #111a14;
+    --color-pw-border: #1e3a24;
+    --color-pw-green: #2ecc71;
+    --color-pw-green-dim: #1a7a43;
+    --color-pw-text: #d4f0dc;
+    --color-pw-muted: #5a8a66;
+    --color-pw-red: #e74c3c;
+    --color-pw-amber: #f39c12;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+
+    --animate-alert-pulse: alert-pulse 1s infinite alternate;
+    @keyframes alert-pulse {
+      from { opacity: 0.8; }
+      to   { opacity: 1; }
+    }
+  }
+  @layer base {
+    body {
+      background-image: radial-gradient(ellipse at 10% 80%, #0d2e1a 0%, transparent 55%);
+    }
+  }
+</style>
+</head>
+<body class="bg-pw-bg text-pw-text font-mono min-h-screen">
+
+<nav class="flex items-center justify-between px-8 py-4 border-b border-pw-border bg-pw-bg/90 sticky top-0 z-10 backdrop-blur-sm">
+  <div class="font-head font-extrabold text-[1.2rem] text-pw-green">🌿 PestWatch</div>
+  <div>
+    <span class="text-[0.75rem] text-pw-muted">Logged in as <span id="username" class="text-pw-text"></span></span>
+    <a class="text-pw-red no-underline text-[0.75rem] ml-6 hover:underline" href="/logout">Logout</a>
+  </div>
+</nav>
+
+<main class="max-w-[1200px] mx-auto p-8">
+  <h1 class="font-head text-[1.6rem] font-extrabold mb-1">Sensor Dashboard</h1>
+  <div class="text-pw-muted text-[0.75rem] mb-8">// Live IoT monitoring — auto-refreshes every 10 seconds</div>
+
+  <!-- ── Stat Cards ── -->
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Temperature</div>
+      <div class="font-head text-[2rem] font-extrabold text-pw-green"><span id="stat-temp">--</span><span class="text-[0.8rem] text-pw-muted ml-1">°C</span></div>
+    </div>
+
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Humidity</div>
+      <div class="font-head text-[2rem] font-extrabold text-pw-green"><span id="stat-humidity">--</span><span class="text-[0.8rem] text-pw-muted ml-1">%</span></div>
+    </div>
+
+    <div id="card-proximity" class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Proximity / IR</div>
+      <div id="stat-proximity" class="font-head text-[2rem] font-extrabold text-pw-green">CLEAR</div>
+    </div>
+
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-amber">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Pest Alerts Total</div>
+      <div id="stat-pests" class="font-head text-[2rem] font-extrabold text-pw-amber">0</div>
+    </div>
+
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Total Readings</div>
+      <div id="stat-total" class="font-head text-[2rem] font-extrabold">0</div>
+    </div>
+  </div>
+
+  <!-- ── Status Banner ── -->
+  <div id="banner" class="hidden"></div>
+
+  <!-- ── Recent Logs Table ── -->
+  <div class="bg-pw-panel border border-pw-border rounded-[4px] overflow-hidden">
+    <div class="px-6 py-4 border-b border-pw-border text-[0.75rem] text-pw-muted uppercase tracking-[1px]">Recent Sensor Logs (last 20)</div>
+    <table class="w-full border-collapse">
+      <thead>
+        <tr>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">#</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Timestamp</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Temp (°C)</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Humidity (%)</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Proximity</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Sender</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Recipient</th>
+        </tr>
+      </thead>
+      <tbody id="log-body" class="[&>tr:last-child>td]:border-b-0"></tbody>
+    </table>
+  </div>
+
+  <div class="text-right text-[0.65rem] text-pw-muted mt-4">Page auto-refreshes every 10s &nbsp;|&nbsp; <span id="clock">--:--:--</span></div>
+</main>
+
+<script>
+  const REFRESH_MS = 10000;
+
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const esc = (s) =>
+    String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // YYYY-MM-DD HH:MM:SS in the viewer's local time
+  const fmtDateTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+
+  const BANNER_BASE = 'px-6 py-4 rounded-[4px] mb-8 flex items-center gap-4 font-head font-bold text-base';
+  const BANNER_SAFE = BANNER_BASE + ' bg-pw-green/10 border border-pw-green-dim text-pw-green';
+  const BANNER_DANGER = BANNER_BASE + ' bg-pw-red/15 border border-pw-red text-pw-red animate-alert-pulse';
+  const DOT = '<div class="w-[10px] h-[10px] rounded-full bg-current shrink-0"></div>';
+
+  const TD = 'px-4 py-3 text-[0.8rem] border-b border-pw-border/40';
+  const BADGE = 'inline-block px-2 py-[0.2rem] rounded-[2px] text-[0.65rem] font-bold tracking-[0.5px]';
+  const BADGE_ALERT = BADGE + ' bg-pw-red/20 text-pw-red border border-pw-red/40';
+  const BADGE_NORMAL = BADGE + ' bg-pw-green/15 text-pw-green border border-pw-green/30';
+
+  function render(data) {
+    const { logs, pestCount, totalLogs, username } = data;
+    const latest = logs[0] || null;
+    const pest = Boolean(latest && latest.pestDetected);
+
+    $('username').textContent = username;
+
+    // Stat cards
+    $('stat-temp').textContent = latest ? Number(latest.temperature).toFixed(1) : '--';
+    $('stat-humidity').textContent = latest ? Number(latest.humidity).toFixed(0) : '--';
+    $('stat-proximity').textContent = pest ? 'DETECTED' : 'CLEAR';
+    $('stat-proximity').classList.toggle('text-pw-red', pest);
+    $('stat-proximity').classList.toggle('text-pw-green', !pest);
+    $('card-proximity').classList.toggle('before:bg-pw-red', pest);
+    $('card-proximity').classList.toggle('before:bg-pw-green', !pest);
+    $('stat-pests').textContent = pestCount;
+    $('stat-total').textContent = totalLogs;
+
+    // Status banner
+    const banner = $('banner');
+    if (pest) {
+      banner.className = BANNER_DANGER;
+      banner.innerHTML = `${DOT}⚠ PEST DETECTED — Alert SMS sent to ${esc(latest.recipient)}`;
+    } else {
+      banner.className = BANNER_SAFE;
+      banner.innerHTML = `${DOT}✓ All clear — Monitoring active`;
+    }
+
+    // Logs table
+    if (logs.length === 0) {
+      $('log-body').innerHTML =
+        '<tr><td colspan="7" class="text-center text-pw-muted p-8">No data yet. Waiting for Arduino...</td></tr>';
+    } else {
+      $('log-body').innerHTML = logs
+        .map(
+          (row) => `
+        <tr class="hover:bg-pw-green/3">
+          <td class="${TD}">${esc(row.id)}</td>
+          <td class="${TD}">${esc(fmtDateTime(row.createdAt))}</td>
+          <td class="${TD}">${Number(row.temperature).toFixed(1)}</td>
+          <td class="${TD}">${Number(row.humidity).toFixed(0)}</td>
+          <td class="${TD}"><span class="${row.pestDetected ? BADGE_ALERT : BADGE_NORMAL}">${row.pestDetected ? 'PEST' : 'CLEAR'}</span></td>
+          <td class="${TD}">${esc(row.sender)}</td>
+          <td class="${TD}">${esc(row.recipient)}</td>
+        </tr>`
+        )
+        .join('');
+    }
+
+    const now = new Date();
+    $('clock').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('/api/dashboard', { cache: 'no-store' });
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!res.ok) return; // keep the last good data, try again on the next tick
+      render(await res.json());
+    } catch (err) {
+      // server unreachable — keep showing the last data and retry
+    }
+  }
+
+  load();
+  setInterval(load, REFRESH_MS);
+<\/script>
+</body>
+</html>
+</script>
+
+<script>
+const $=id=>document.getElementById(id),NS='http://www.w3.org/2000/svg',sl=ms=>new Promise(r=>setTimeout(r,ms)),cl=(v,a,b)=>Math.min(b,Math.max(a,v));
+const S={temp:28.4,hum:67,ir:false,run:false,gen:0,logs:[],pests:0,total:0,lastPost:0,lastAlert:-1e9,timer:null,t0:Date.now(),sp:1};
+function flow(n){const e=$('f'+n);if(!e)return;e.classList.add('hot');setTimeout(()=>e.classList.remove('hot'),700)}
+const dev=$('dev'),dash=$('dash');
+
+// ── Dashboard: embed unchanged, feed it data through a fetch shim ──
+const shim='<script>let D={logs:[],pestCount:0,totalLogs:0,username:"admin"};window.fetch=()=>Promise.resolve({status:200,ok:true,json:()=>Promise.resolve(D)});addEventListener("message",e=>{D=e.data;if(window.load)load()})<'+'/script>';
+dash.srcdoc=$('dash-src').textContent.replace(/<\\\/script>/g,'<'+'/script>').replace('<head>','<head>'+shim);
+const pushDash=()=>flow(4)||dash.contentWindow.postMessage({logs:S.logs,pestCount:S.pests,totalLogs:S.total,username:'admin'},'*');
+
+// ── LCD 16x2 + LED matrix ──
+const cells=[],g=$('lcd');
+for(let r=0;r<2;r++)for(let c=0;c<16;c++){const x=98+c*20.25,y=31+r*30;
+  g.insertAdjacentHTML('beforeend',`<rect x="${x}" y="${y}" width="18.5" height="27" rx="1" fill="#000" opacity=".1"/>`);
+  const t=document.createElementNS(NS,'text');t.setAttribute('x',x+9.25);t.setAttribute('y',y+21);t.setAttribute('text-anchor','middle');g.appendChild(t);cells.push(t)}
+function lcd(a,b){const s=(a.padEnd(16)+b.padEnd(16)).slice(0,32);cells.forEach((t,i)=>t.textContent=s[i])}
+const bl=on=>$('lcdbg').setAttribute('fill',on?'#8fd14f':'#26361d');
+const dots=[];for(let r=0;r<8;r++)for(let c=0;c<12;c++){const e=document.createElementNS(NS,'circle');e.setAttribute('cx',247+c*9.6);e.setAttribute('cy',349+r*9.6);e.setAttribute('r',3);e.setAttribute('fill','#161616');$('mx').appendChild(e);dots.push(e)}
+let ph=0;setInterval(()=>{ph++;dots.forEach((d,i)=>{const c=i%12;d.setAttribute('fill',!S.run?'#161616':S.ir?(ph%2?'#e74c3c':'#3a1210'):(c===ph%12?'#2ecc71':'#0f2a18'))})},130);
+
+// ── Serial monitor ──
+function log(m,c=''){const s=$('ser'),d=document.createElement('div');d.className=c;d.textContent=`[${((Date.now()-S.t0)/1000).toFixed(1).padStart(6)}] ${m}`;s.appendChild(d);while(s.children.length>80)s.firstChild.remove();s.scrollTop=1e9}
+
+// ── Buzzer ──
+let ac;
+function tone(ms){if(!$('snd').checked||!ac)return;try{const o=ac.createOscillator(),v=ac.createGain();o.type='square';o.frequency.value=2700;v.gain.value=.03;o.connect(v);v.connect(ac.destination);o.start();o.stop(ac.currentTime+ms/1000)}catch(e){}}
+function beep(){for(let i=0;i<5;i++){setTimeout(()=>{dev.classList.add('bz');tone(100)},i*200);setTimeout(()=>dev.classList.remove('bz'),i*200+100)}}
+
+// ── SIM800L SMS ──
+function sms(t,h){log('Sending SMS to +63956XXXXXXX...','y');dev.classList.add('sms');
+  $('smst').textContent='Alert: Pest detected!';$('smst2').textContent=`Temp: ${t.toFixed(1)}C`;$('smst3').textContent=`Humidity: ${h.toFixed(0)}%`;
+  setTimeout(()=>{dev.classList.remove('sms');log('SMS sent.','y')},4500)}
+
+// ── Server POST (replaces PHP receive.php) ──
+function post(t,h,p){flow(3);
+  const row={id:++S.total,createdAt:new Date().toISOString(),temperature:+t.toFixed(1),humidity:Math.round(h),pestDetected:p,sender:'SIM800L Module',recipient:'+63956XXXXXXX'};
+  if(p)S.pests++;S.logs.unshift(row);S.logs.length=Math.min(S.logs.length,20);
+  log(`POST /iot/receive.php temp=${row.temperature}&humidity=${row.humidity}&pest=${+p}`,'b');log('Status Code: 200 · Data saved OK!','b');
+  const w=$('wifiled');w.setAttribute('fill','#3498db');setTimeout(()=>w.setAttribute('fill','#444'),400);pushDash()}
+
+// ── Pest / IR sensor ──
+function pest(ms){S.ir=true;dev.classList.add('ir');setTimeout(()=>{S.ir=false;dev.classList.remove('ir')},ms)}
+
+// ── Firmware loop() ──
+function tick(){
+  if(!S.run)return;
+  S.temp=cl(S.temp+(Math.random()-.5)*.6,15,45);S.hum=cl(S.hum+(Math.random()-.5)*3,20,98);
+  $('ts').value=S.temp;$('hs').value=S.hum;$('tv').textContent=S.temp.toFixed(1);$('hv').textContent=S.hum.toFixed(0);
+  if(!S.ir&&Math.random()<.09)pest(2000/S.sp+1200);
+  const t=S.temp,h=S.hum,ir=S.ir,now=Date.now();flow(1);setTimeout(()=>flow(2),300);
+  $('dhtv').textContent=`${t.toFixed(1)}°C ${h.toFixed(0)}%`;
+  if(now-S.lastPost>=5000/S.sp){S.lastPost=now;post(t,h,ir)}
+  if(ir){lcd(' PEST DETECTED! ',`T:${t.toFixed(1)}C H:${h.toFixed(0)}%`);log('PEST DETECTED!','r');beep();
+    if(now-S.lastAlert>=30000/S.sp){S.lastAlert=now;sms(t,h)}else log('SMS cooldown (30 s) — skipped.','y')}
+  else{lcd(`T:${t.toFixed(1)}C  H:${h.toFixed(0)}%`,' Monitoring...  ');log(`Temp: ${t.toFixed(1)}C | Humidity: ${h.toFixed(0)}%`)}
+}
+
+// ── Boot / stop ──
+function chip(on){const c=$('chip');c.textContent=on?'● RUNNING':'● POWERED OFF';c.className=on?'on':''}
+async function start(){
+  const id=++S.gen;S.run=false;S.lastPost=0;
+  try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}
+  $('simBtn').textContent='■ Stop';$('simBtn').classList.add('stop');dev.classList.add('run');chip(true);bl(true);
+  log('Serial 9600 — boot');lcd('  Pest Detect  ','  Initializing ');await sl(1500);if(S.gen!==id)return;
+  lcd('WiFi Connecting','HUAWEI-2.4G-****');log('Connecting to WiFi: HUAWEI-2.4G-****');await sl(1500);if(S.gen!==id)return;
+  lcd('WiFi Connected','192.168.100.57');log('WiFi connected! Arduino IP: 192.168.100.57');$('wifiled').setAttribute('fill','#444');await sl(1300);if(S.gen!==id)return;
+  lcd('','');log('System Ready.');S.run=true;$('pestBtn').disabled=false;tick();S.timer=setInterval(tick,2000/S.sp)}
+function stop(){S.gen++;S.run=false;clearInterval(S.timer);S.ir=false;dev.classList.remove('run','ir','bz','sms');
+  $('simBtn').textContent='▶ Play';$('simBtn').classList.remove('stop');$('pestBtn').disabled=true;lcd('','');bl(false);chip(false);log('Device powered off.','y')}
+
+$('simBtn').onclick=()=>$('simBtn').classList.contains('stop')?stop():start();
+$('pestBtn').onclick=()=>{if(S.run&&!S.ir)pest(2000/S.sp+1200)};
+$('spd').oninput=e=>{S.sp=+e.target.value;$('spv').textContent=S.sp+'×';if(S.run){clearInterval(S.timer);S.timer=setInterval(tick,2000/S.sp)}};
+const wrap=document.querySelector('.wrap'),spl=$('split');
+const setW=px=>wrap.style.setProperty('--lw',cl(px,380,wrap.clientWidth-380-72)+'px');
+spl.onpointerdown=e=>{spl.setPointerCapture(e.pointerId);wrap.classList.add('d');spl.classList.add('d')};
+spl.onpointermove=e=>{if(spl.classList.contains('d'))setW(e.clientX-wrap.getBoundingClientRect().left-24)};
+spl.onpointerup=()=>{wrap.classList.remove('d');spl.classList.remove('d')};
+spl.onkeydown=e=>{const w=dev.getBoundingClientRect().width;if(e.key==='ArrowLeft')setW(w-30);if(e.key==='ArrowRight')setW(w+30)};
+spl.ondblclick=()=>wrap.style.removeProperty('--lw');
+$('ts').oninput=e=>{S.temp=+e.target.value;$('tv').textContent=S.temp.toFixed(1)};
+$('hs').oninput=e=>{S.hum=+e.target.value;$('hv').textContent=S.hum.toFixed(0)};
+lcd('','');log('Press Play to power on the node.');
+</script>
+</body>
+</html>

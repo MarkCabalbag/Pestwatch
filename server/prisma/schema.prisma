@@ -1,0 +1,35 @@
+// Prisma schema for PestWatch.
+// Mirrors the original MySQL tables (users, sensor_logs) so an existing
+// pest_monitor database keeps working.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique(map: "username") @db.VarChar(50)
+  email     String    @unique(map: "email") @db.VarChar(100)
+  password  String    @db.VarChar(255) // bcrypt hash
+  createdAt DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@map("users")
+}
+
+// Readings sent by the Arduino / SIM800L module
+model SensorLog {
+  id           Int       @id @default(autoincrement())
+  temperature  Float     @db.Float
+  humidity     Float     @db.Float
+  pestDetected Boolean   @default(false) @map("pest_detected")
+  sender       String?   @default("SIM800L") @db.VarChar(20)
+  recipient    String?   @default("") @db.VarChar(20)
+  createdAt    DateTime? @default(now()) @map("created_at") @db.DateTime(0)
+
+  @@map("sensor_logs")
+}

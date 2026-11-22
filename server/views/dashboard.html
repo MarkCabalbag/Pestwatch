@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — PestWatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --color-pw-bg: #0a0f0d;
+    --color-pw-panel: #111a14;
+    --color-pw-border: #1e3a24;
+    --color-pw-green: #2ecc71;
+    --color-pw-green-dim: #1a7a43;
+    --color-pw-text: #d4f0dc;
+    --color-pw-muted: #5a8a66;
+    --color-pw-red: #e74c3c;
+    --color-pw-amber: #f39c12;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+
+    --animate-alert-pulse: alert-pulse 1s infinite alternate;
+    @keyframes alert-pulse {
+      from { opacity: 0.8; }
+      to   { opacity: 1; }
+    }
+  }
+  @layer base {
+    body {
+      background-image: radial-gradient(ellipse at 10% 80%, #0d2e1a 0%, transparent 55%);
+    }
+  }
+</style>
+</head>
+<body class="bg-pw-bg text-pw-text font-mono min-h-screen">
+
+<nav class="flex items-center justify-between px-8 py-4 border-b border-pw-border bg-pw-bg/90 sticky top-0 z-10 backdrop-blur-sm">
+  <div class="font-head font-extrabold text-[1.2rem] text-pw-green">🌿 PestWatch</div>
+  <div>
+    <span class="text-[0.75rem] text-pw-muted">Logged in as <span id="username" class="text-pw-text"></span></span>
+    <a class="text-pw-red no-underline text-[0.75rem] ml-6 hover:underline" href="/logout">Logout</a>
+  </div>
+</nav>
+
+<main class="max-w-[1200px] mx-auto p-8">
+  <h1 class="font-head text-[1.6rem] font-extrabold mb-1">Sensor Dashboard</h1>
+  <div class="text-pw-muted text-[0.75rem] mb-8">// Live IoT monitoring — auto-refreshes every 10 seconds</div>
+
+  <!-- ── Stat Cards ── -->
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Temperature</div>
+      <div class="font-head text-[2rem] font-extrabold text-pw-green"><span id="stat-temp">--</span><span class="text-[0.8rem] text-pw-muted ml-1">°C</span></div>
+    </div>
+
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Humidity</div>
+      <div class="font-head text-[2rem] font-extrabold text-pw-green"><span id="stat-humidity">--</span><span class="text-[0.8rem] text-pw-muted ml-1">%</span></div>
+    </div>
+
+    <div id="card-proximity" class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Proximity / IR</div>
+      <div id="stat-proximity" class="font-head text-[2rem] font-extrabold text-pw-green">CLEAR</div>
+    </div>
+
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-amber">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Pest Alerts Total</div>
+      <div id="stat-pests" class="font-head text-[2rem] font-extrabold text-pw-amber">0</div>
+    </div>
+
+    <div class="bg-pw-panel border border-pw-border rounded-[4px] p-6 relative overflow-hidden before:content-[''] before:absolute before:top-0 before:left-0 before:w-[3px] before:h-full before:bg-pw-green">
+      <div class="text-[0.65rem] text-pw-muted uppercase tracking-[1px] mb-2">Total Readings</div>
+      <div id="stat-total" class="font-head text-[2rem] font-extrabold">0</div>
+    </div>
+  </div>
+
+  <!-- ── Status Banner ── -->
+  <div id="banner" class="hidden"></div>
+
+  <!-- ── Recent Logs Table ── -->
+  <div class="bg-pw-panel border border-pw-border rounded-[4px] overflow-hidden">
+    <div class="px-6 py-4 border-b border-pw-border text-[0.75rem] text-pw-muted uppercase tracking-[1px]">Recent Sensor Logs (last 20)</div>
+    <table class="w-full border-collapse">
+      <thead>
+        <tr>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">#</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Timestamp</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Temp (°C)</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Humidity (%)</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Proximity</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Sender</th>
+          <th class="px-4 py-3 text-left text-[0.65rem] text-pw-muted uppercase tracking-[1px] border-b border-pw-border">Recipient</th>
+        </tr>
+      </thead>
+      <tbody id="log-body" class="[&>tr:last-child>td]:border-b-0"></tbody>
+    </table>
+  </div>
+
+  <div class="text-right text-[0.65rem] text-pw-muted mt-4">Page auto-refreshes every 10s &nbsp;|&nbsp; <span id="clock">--:--:--</span></div>
+</main>
+
+<script>
+  const REFRESH_MS = 10000;
+
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const esc = (s) =>
+    String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // YYYY-MM-DD HH:MM:SS in the viewer's local time
+  const fmtDateTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+
+  const BANNER_BASE = 'px-6 py-4 rounded-[4px] mb-8 flex items-center gap-4 font-head font-bold text-base';
+  const BANNER_SAFE = BANNER_BASE + ' bg-pw-green/10 border border-pw-green-dim text-pw-green';
+  const BANNER_DANGER = BANNER_BASE + ' bg-pw-red/15 border border-pw-red text-pw-red animate-alert-pulse';
+  const DOT = '<div class="w-[10px] h-[10px] rounded-full bg-current shrink-0"></div>';
+
+  const TD = 'px-4 py-3 text-[0.8rem] border-b border-pw-border/40';
+  const BADGE = 'inline-block px-2 py-[0.2rem] rounded-[2px] text-[0.65rem] font-bold tracking-[0.5px]';
+  const BADGE_ALERT = BADGE + ' bg-pw-red/20 text-pw-red border border-pw-red/40';
+  const BADGE_NORMAL = BADGE + ' bg-pw-green/15 text-pw-green border border-pw-green/30';
+
+  function render(data) {
+    const { logs, pestCount, totalLogs, username } = data;
+    const latest = logs[0] || null;
+    const pest = Boolean(latest && latest.pestDetected);
+
+    $('username').textContent = username;
+
+    // Stat cards
+    $('stat-temp').textContent = latest ? Number(latest.temperature).toFixed(1) : '--';
+    $('stat-humidity').textContent = latest ? Number(latest.humidity).toFixed(0) : '--';
+    $('stat-proximity').textContent = pest ? 'DETECTED' : 'CLEAR';
+    $('stat-proximity').classList.toggle('text-pw-red', pest);
+    $('stat-proximity').classList.toggle('text-pw-green', !pest);
+    $('card-proximity').classList.toggle('before:bg-pw-red', pest);
+    $('card-proximity').classList.toggle('before:bg-pw-green', !pest);
+    $('stat-pests').textContent = pestCount;
+    $('stat-total').textContent = totalLogs;
+
+    // Status banner
+    const banner = $('banner');
+    if (pest) {
+      banner.className = BANNER_DANGER;
+      banner.innerHTML = `${DOT}⚠ PEST DETECTED — Alert SMS sent to ${esc(latest.recipient)}`;
+    } else {
+      banner.className = BANNER_SAFE;
+      banner.innerHTML = `${DOT}✓ All clear — Monitoring active`;
+    }
+
+    // Logs table
+    if (logs.length === 0) {
+      $('log-body').innerHTML =
+        '<tr><td colspan="7" class="text-center text-pw-muted p-8">No data yet. Waiting for Arduino...</td></tr>';
+    } else {
+      $('log-body').innerHTML = logs
+        .map(
+          (row) => `
+        <tr class="hover:bg-pw-green/3">
+          <td class="${TD}">${esc(row.id)}</td>
+          <td class="${TD}">${esc(fmtDateTime(row.createdAt))}</td>
+          <td class="${TD}">${Number(row.temperature).toFixed(1)}</td>
+          <td class="${TD}">${Number(row.humidity).toFixed(0)}</td>
+          <td class="${TD}"><span class="${row.pestDetected ? BADGE_ALERT : BADGE_NORMAL}">${row.pestDetected ? 'PEST' : 'CLEAR'}</span></td>
+          <td class="${TD}">${esc(row.sender)}</td>
+          <td class="${TD}">${esc(row.recipient)}</td>
+        </tr>`
+        )
+        .join('');
+    }
+
+    const now = new Date();
+    $('clock').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  }
+
+  async function load() {
+    try {
+      const res = await fetch('/api/dashboard', { cache: 'no-store' });
+      if (res.status === 401) {
+        window.location.href = '/login';
+        return;
+      }
+      if (!res.ok) return; // keep the last good data, try again on the next tick
+      render(await res.json());
+    } catch (err) {
+      // server unreachable — keep showing the last data and retry
+    }
+  }
+
+  load();
+  setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>
